@@ -165,13 +165,6 @@ func main() {
 				rec.PTRProbe = DoPTRProbe(c, domainname)
 				rec.SRVProbe = DoSRVProbe(workerId, c, domainname)
 
-				// r represents a single struct containing the sd query output
-				result, err := collection.InsertOne(context.TODO(), rec)
-				if err != nil {
-					mu.Fatalf("failed to insert mongo record: %v", err)
-				}
-				_ = result
-
 				outch <- rec
 			}
 		}()
@@ -191,6 +184,14 @@ func main() {
 		if !r.HasResults() {
 			continue
 		}
+
+		// r represents a single struct containing the sd query output
+		result, mongo_err := collection.InsertOne(context.TODO(), r)
+		if mongo_err != nil {
+			//mu.Fatalf("failed to insert mongo record: %v", err)
+			fmt.Println("MONGO ERROR:", mongo_err)
+		}
+		_ = result
 
 		jsonWriter.Encode(r)
 	}
