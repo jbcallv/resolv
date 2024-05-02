@@ -10,8 +10,8 @@ import (
 	"github.com/syslab-wm/mu"
 )
 
-func (c *Client) GetIP4s(domain string) ([]netip.Addr, error) {
-	var addrs []netip.Addr
+func (c *Client) GetIP4s(domain string) ([]string, error) {
+	var addrs []string
 
 	resp, err := c.Lookup(domain, dns.TypeA)
 	if err != nil {
@@ -24,7 +24,7 @@ func (c *Client) GetIP4s(domain string) ([]netip.Addr, error) {
 		if !ok {
 			continue
 		}
-		addrs = append(addrs, addr)
+		addrs = append(addrs, addr.String())
 	}
 
 	if len(addrs) == 0 {
@@ -34,8 +34,8 @@ func (c *Client) GetIP4s(domain string) ([]netip.Addr, error) {
 	return addrs, nil
 }
 
-func (c *Client) GetIP6s(domain string) ([]netip.Addr, error) {
-	var addrs []netip.Addr
+func (c *Client) GetIP6s(domain string) ([]string, error) {
+	var addrs []string
 
 	resp, err := c.Lookup(domain, dns.TypeAAAA)
 	if err != nil {
@@ -48,7 +48,7 @@ func (c *Client) GetIP6s(domain string) ([]netip.Addr, error) {
 		if !ok {
 			continue
 		}
-		addrs = append(addrs, addr)
+		addrs = append(addrs, addr.String())
 	}
 
 	if len(addrs) == 0 {
@@ -58,8 +58,8 @@ func (c *Client) GetIP6s(domain string) ([]netip.Addr, error) {
 	return addrs, nil
 }
 
-func (c *Client) GetIPs(name string) ([]netip.Addr, error) {
-	var addrs []netip.Addr
+func (c *Client) GetIPs(name string) ([]string, error) {
+	var addrs []string
 	var errs []error
 
 	a, err := c.GetIP4s(name)
@@ -90,7 +90,7 @@ func (c *Client) GetIPs(name string) ([]netip.Addr, error) {
 
 type Nameserver struct {
 	Name  string
-	Addrs []netip.Addr
+	Addrs []string
 }
 
 func (ns *Nameserver) String() string {

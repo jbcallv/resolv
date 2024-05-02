@@ -41,7 +41,7 @@ func DoSRVProbe(id int, c *resolv.Client, domain string) *SRVProbeResult {
 			}
 
 			// Check if Response includes A/AAAA in the Additional section
-			var addrs []netip.Addr
+			var addrs []string
 			for _, a := range as {
 				if a.Hdr.Name != srv.Target {
 					continue
@@ -50,7 +50,7 @@ func DoSRVProbe(id int, c *resolv.Client, domain string) *SRVProbeResult {
 				if !ok {
 					continue
 				}
-				addrs = append(addrs, addr)
+				addrs = append(addrs, addr.String())
 			}
 			for _, aaaa := range aaaas {
 				if aaaa.Hdr.Name != info.Target {
@@ -60,7 +60,7 @@ func DoSRVProbe(id int, c *resolv.Client, domain string) *SRVProbeResult {
 				if !ok {
 					continue
 				}
-				addrs = append(addrs, addr)
+				addrs = append(addrs, addr.String())
 			}
 
 			if len(addrs) > 0 {

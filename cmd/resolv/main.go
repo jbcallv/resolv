@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/netip"
 	"strings"
 
 	"github.com/syslab-wm/adt/set"
@@ -34,7 +33,7 @@ func getNameservers(c *resolv.Client, qname string) error {
 	}
 
 	for _, nameserver := range nameservers {
-		strAddrs := functools.Map[netip.Addr, string](nameserver.Addrs, func(addr netip.Addr) string {
+		strAddrs := functools.Map[string, string](nameserver.Addrs, func(addr string) string {
 			return fmt.Sprintf("%v", addr)
 		})
 		fmt.Printf("%s: %s\n", nameserver.Name, strings.Join(strAddrs, " "))

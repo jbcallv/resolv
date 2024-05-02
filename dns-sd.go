@@ -159,7 +159,7 @@ type ServiceInstanceInfo struct {
 
 	Txt []string
 
-	Addrs []netip.Addr
+	Addrs []string
 }
 
 func (info *ServiceInstanceInfo) String() string {
@@ -168,7 +168,7 @@ func (info *ServiceInstanceInfo) String() string {
 }
 
 func (c *Client) GetServiceInstanceInfo(domain string) (*ServiceInstanceInfo, error) {
-	var addrs []netip.Addr
+	var addrs []string
 	info := new(ServiceInstanceInfo)
 	info.Name = domain
 
@@ -195,7 +195,7 @@ func (c *Client) GetServiceInstanceInfo(domain string) (*ServiceInstanceInfo, er
 		if !ok {
 			continue
 		}
-		addrs = append(addrs, addr)
+		addrs = append(addrs, addr.String())
 	}
 	aaaas := CollectRRs[*dns.AAAA](resp.Extra)
 	for _, aaaa := range aaaas {
@@ -206,7 +206,7 @@ func (c *Client) GetServiceInstanceInfo(domain string) (*ServiceInstanceInfo, er
 		if !ok {
 			continue
 		}
-		addrs = append(addrs, addr)
+		addrs = append(addrs, addr.String())
 	}
 
 	if len(addrs) > 0 {
