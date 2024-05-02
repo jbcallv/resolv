@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -45,8 +46,9 @@ func processFile(path string, ch chan<- string) {
 	}
 }
 
-func createDatabaseClient(collection string) *mongo.Client {
+func createDatabaseClient() *mongo.Client {
 	uri := resolv.GetMongoDBConnectionString()
+	fmt.Println(uri)
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
@@ -128,12 +130,12 @@ func main() {
 	opts := parseOptions()
 
 	// hardcoded 'services' database name - could be an option
-	mongoClient := createDatabaseClient(opts.collection)
+	mongoClient := createDatabaseClient()
 	collection := mongoClient.Database("services").Collection(opts.collection)
 
 	defer func() {
 		if err := mongoClient.Disconnect(context.TODO()); err != nil {
-			mu.Fatalf("failed to connect to mongo db: %v", err)
+			mu.Fatalf("failed to disconnect to mongo db: %v", err)
 		}
 	}()
 
@@ -162,6 +164,14 @@ func main() {
 				rec.DNSSDProbe = DoDNSSDProbe(c, domainname)
 				rec.PTRProbe = DoPTRProbe(c, domainname)
 				rec.SRVProbe = DoSRVProbe(workerId, c, domainname)
+
+				// r represents a single struct containing the sd query output
+				result, err := collection.InsertOne(context.TODO(), rec)
+				if err != nil {
+					mu.Fatalf("failed to insert mongo record: %v", err)
+				}
+				_ = result
+
 				outch <- rec
 			}
 		}()
@@ -181,13 +191,6 @@ func main() {
 		if !r.HasResults() {
 			continue
 		}
-
-		// r represents a single struct containing the sd query output
-		result, err := collection.InsertOne(context.TODO(), r)
-		if err != nil {
-			mu.Fatalf("failed to insert mongo record: %v", err)
-		}
-		_ = result
 
 		jsonWriter.Encode(r)
 	}
