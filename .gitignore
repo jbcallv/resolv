@@ -1,0 +1,6 @@
+# data collection
+data/
+out/
+
+# application secrets
+.env

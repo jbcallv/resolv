@@ -2,15 +2,20 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"log"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/miekg/dns"
 	"github.com/syslab-wm/mu"
 	"github.com/syslab-wm/netx"
 	"github.com/syslab-wm/resolv"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func processFile(path string, ch chan<- string) {
@@ -26,6 +31,11 @@ func processFile(path string, ch chan<- string) {
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
+
+		// added for csv format! Disable if first column is domain name
+		domain_information := strings.Split(line, ",")
+		line = domain_information[1]
+
 		ch <- line
 		i++
 	}
@@ -33,6 +43,17 @@ func processFile(path string, ch chan<- string) {
 	if err := scanner.Err(); err != nil {
 		mu.Fatalf("error: failed to read input file: %v", err)
 	}
+}
+
+func createDatabaseClient(collection string) *mongo.Client {
+	uri := resolv.GetMongoDBConnectionString()
+
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+	if err != nil {
+		mu.Fatalf("couldn't create database client: %v", err)
+	}
+
+	return client
 }
 
 func newClient(opts *Options) *resolv.Client {
@@ -106,6 +127,16 @@ func main() {
 
 	opts := parseOptions()
 
+	// hardcoded 'services' database name - could be an option
+	mongoClient := createDatabaseClient(opts.collection)
+	collection := mongoClient.Database("services").Collection(opts.collection)
+
+	defer func() {
+		if err := mongoClient.Disconnect(context.TODO()); err != nil {
+			mu.Fatalf("failed to connect to mongo db: %v", err)
+		}
+	}()
+
 	inch := make(chan string, opts.numWorkers)
 	outch := make(chan *ScanRecord, opts.numWorkers)
 	wg.Add(opts.numWorkers)
@@ -145,11 +176,19 @@ func main() {
 	go processFile(opts.inputFile, inch)
 
 	jsonWriter := json.NewEncoder(os.Stdout)
-	//jsonWriter.SetIndent("", "    ")
+
 	for r := range outch {
 		if !r.HasResults() {
 			continue
 		}
+
+		// r represents a single struct containing the sd query output
+		result, err := collection.InsertOne(context.TODO(), r)
+		if err != nil {
+			mu.Fatalf("failed to insert mongo record: %v", err)
+		}
+		_ = result
+
 		jsonWriter.Encode(r)
 	}
 

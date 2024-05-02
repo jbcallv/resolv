@@ -176,6 +176,8 @@ query options:
      Finally, a non-standard type can be specified by its numeric value 
      as TYPE###, e.g.  -type TYPE234.
 
+  -collection COLLECTION
+	MongoDB collection for output JSON storage
 
 examples:
   $ ./resolv -https -type NS www.cs.wm.edu
@@ -211,6 +213,7 @@ type Options struct {
 	tlsHostname  string
 	qtypeStr     string
 	qtype        uint16 // derived
+	collection   string
 }
 
 var metaQueries = map[string]bool{
@@ -251,6 +254,7 @@ func parseOptions() *Options {
 	flag.StringVar(&opts.tlsCA, "tls-ca", "", "")
 	flag.StringVar(&opts.tlsHostname, "tls-hostname", "", "")
 	flag.StringVar(&opts.qtypeStr, "type", "A", "")
+	flag.StringVar(&opts.collection, "collection", "top-1m", "")
 
 	flag.Parse()
 
