@@ -179,6 +179,7 @@ func main() {
 	go processFile(opts.inputFile, inch)
 
 	jsonWriter := json.NewEncoder(os.Stdout)
+	//_ = collection
 
 	for r := range outch {
 		if !r.HasResults() {
@@ -188,7 +189,6 @@ func main() {
 		// r represents a single struct containing the sd query output
 		result, mongo_err := collection.InsertOne(context.TODO(), r)
 		if mongo_err != nil {
-			//mu.Fatalf("failed to insert mongo record: %v", err)
 			fmt.Println("MONGO ERROR:", mongo_err)
 		}
 		_ = result
